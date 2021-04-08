@@ -22,6 +22,9 @@
 #ifndef MIO_MMAP_HEADER
 #define MIO_MMAP_HEADER
 
+
+#define  __cpp_exceptions
+
 // #include "mio/page.hpp"
 /* Copyright 2017 https://github.com/mandreyel
  *
@@ -1597,17 +1600,6 @@ public:
 using trim_whitespace = trim_characters<' ', '\t'>;
 } // namespace trim_policy
 
-template <char character> struct delimiter {
-  constexpr static char value = character;
-};
-
-template <char character> struct quote_character {
-  constexpr static char value = character;
-};
-
-template <bool flag> struct first_row_is_header {
-  constexpr static bool value = flag;
-};
 
 }
 #pragma once
@@ -1619,15 +1611,33 @@ template <bool flag> struct first_row_is_header {
 
 namespace csv2 {
 
-template <class delimiter = delimiter<','>, class quote_character = quote_character<'"'>,
-          class first_row_is_header = first_row_is_header<true>,
-          class trim_policy = trim_policy::trim_whitespace>
+template <class trim_policy = trim_policy::trim_whitespace>
 class Reader {
   mio::mmap_source mmap_;          // mmap source
   const char *buffer_{nullptr};    // pointer to memory-mapped data
   size_t buffer_size_{0};          // mapped length of buffer
   size_t header_start_{0};         // start index of header (cache)
   size_t header_end_{0};           // end index of header (cache)
+
+//--add by huangshangbin  start
+private:
+	char m_delimiter;
+	char m_quoteCharacter;
+	bool m_firstRowIsHeader;
+
+public:
+	Reader()
+	{
+		m_delimiter = ',';
+		m_quoteCharacter = '"';
+		m_firstRowIsHeader = true;
+	}
+
+	void setDelimiter(char delemiter) { m_delimiter = delemiter; }
+	void setQuoteCharacter(char quoteCharacter) { m_quoteCharacter = quoteCharacter; }
+	void firstRowIsHeader(bool value) { m_firstRowIsHeader = value; }
+
+//--add by huangshangbin  end
 
 public:
   // Use this if you'd like to mmap the CSV file
@@ -1660,6 +1670,18 @@ public:
     friend class Row;
     friend class CellIterator;
 
+	//--add by huangshangbin  start
+  private:
+	  char m_quoteCharacter;
+
+  public:
+	  Cell(char quoteCharacter)
+	  {
+		  m_quoteCharacter = quoteCharacter;
+	  }
+
+	  //--add by huangshangbin  end
+
   public:
     // Returns the raw_value of the cell without handling escaped
     // content, e.g., cell containing """foo""" will be returned
@@ -1681,11 +1703,22 @@ public:
       const auto new_start_end = trim_policy::trim(buffer_, start_, end_);
       for (size_t i = new_start_end.first; i < new_start_end.second; ++i)
         result.push_back(buffer_[i]);
-      for (size_t i = 1; i < result.size(); ++i) {
-        if (result[i] == quote_character::value && result[i - 1] == quote_character::value) {
-          result.erase(i - 1, 1);
-        }
-      }
+
+	  //--add by huangshangbin  start
+	  if (result.size() < 2)
+	  {
+		  return;
+	  }
+
+	  if (result[0] == m_quoteCharacter && result[result.size() - 1] == m_quoteCharacter)
+	  {
+		  result = result.substr(1, result.size() - 2);
+	  }
+	  if (result[0] == m_quoteCharacter && result[result.size() - 1] == '\r' && result[result.size() - 2] == m_quoteCharacter)//for windows newlines
+	  {
+		  result = result.substr(1, result.size() - 3);
+	  }
+	  //--add by huangshangbin  end
     }
   };
 
@@ -1695,6 +1728,20 @@ public:
     size_t end_{0};               // End index of row content
     friend class RowIterator;
     friend class Reader;
+
+//--add by huangshangbin  start
+  private:
+	  char m_delimiter;
+	  char m_quoteCharacter;
+
+  public:
+	  Row(char delimiter, char quoteCharacter)
+	  {
+		  m_delimiter = delimiter;
+		  m_quoteCharacter = quoteCharacter;
+	  }
+
+//--add by huangshangbin  end
 
   public:
     // Returns the raw_value of the row
@@ -1714,11 +1761,21 @@ public:
       size_t current_;
       size_t end_;
 
-    public:
-      CellIterator(const char *buffer, size_t buffer_size, size_t start, size_t end)
-          : buffer_(buffer), buffer_size_(buffer_size), start_(start), current_(start_), end_(end) {
-      }
+	//--add by huangshangbin  start
+	private:
+		char m_delimiter;
+		char m_quoteCharacter;
 
+	public:
+		CellIterator(const char *buffer, size_t buffer_size, size_t start, size_t end, char delimiter, char quoteCharacter)
+			: buffer_(buffer), buffer_size_(buffer_size), start_(start), current_(start_), end_(end) {
+			m_delimiter = delimiter;
+			m_quoteCharacter = quoteCharacter;
+		}
+
+	//--add by huangshangbin  end
+
+    public:
       CellIterator &operator++() {
         current_ += 1;
         return *this;
@@ -1726,7 +1783,7 @@ public:
 
       Cell operator*() {
         bool escaped{false};
-        class Cell cell;
+        class Cell cell(m_quoteCharacter);
         cell.buffer_ = buffer_;
         cell.start_ = current_;
         cell.end_ = end_;
@@ -1735,14 +1792,14 @@ public:
         bool quote_opened = false;
         for (auto i = current_; i < end_; i++) {
           current_ = i;
-          if (buffer_[i] == delimiter::value && !quote_opened) {
+          if (buffer_[i] == m_delimiter && !quote_opened) {
             // actual delimiter
             // end of cell
             cell.end_ = current_;
             cell.escaped_ = escaped;
             return cell;
           } else {
-            if (buffer_[i] == quote_character::value) {
+            if (buffer_[i] == m_quoteCharacter) {
               if (!quote_opened) {
                 // first quote for this cell
                 quote_opened = true;
@@ -1750,7 +1807,7 @@ public:
               } else {
                 escaped = (last_quote_location == i - 1);
                 last_quote_location += (i - last_quote_location) * size_t(!escaped);
-                quote_opened = escaped || (buffer_[i + 1] != delimiter::value);
+                quote_opened = escaped || (buffer_[i + 1] != m_delimiter);
               }
             }
           }
@@ -1762,8 +1819,8 @@ public:
       bool operator!=(const CellIterator &rhs) { return current_ != rhs.current_; }
     };
 
-    CellIterator begin() const { return CellIterator(buffer_, end_ - start_, start_, end_); }
-    CellIterator end() const { return CellIterator(buffer_, end_ - start_, end_, end_); }
+    CellIterator begin() const { return CellIterator(buffer_, end_ - start_, start_, end_, m_delimiter, m_quoteCharacter); }
+    CellIterator end() const { return CellIterator(buffer_, end_ - start_, end_, end_, m_delimiter, m_quoteCharacter); }
   };
 
   class RowIterator {
@@ -1773,10 +1830,23 @@ public:
     size_t start_;
     size_t end_;
 
-  public:
-    RowIterator(const char *buffer, size_t buffer_size, size_t start)
-        : buffer_(buffer), buffer_size_(buffer_size), start_(start), end_(start_) {}
+	//--add by huangshangbin  start
+  private:
+	  char m_delimiter;
+	  char m_quoteCharacter;
+	  bool m_firstRowIsHeader;
 
+  public:
+	  RowIterator(const char *buffer, size_t buffer_size, size_t start, char delimiter, char quoteCharacter, bool _firstRowIsHeader)
+		  : buffer_(buffer), buffer_size_(buffer_size), start_(start), end_(start_) {
+		  m_delimiter = delimiter;
+		  m_quoteCharacter = quoteCharacter;
+		  m_firstRowIsHeader = _firstRowIsHeader;
+	  }
+
+	  //--add by huangshangbin  end
+
+  public:
     RowIterator &operator++() {
       start_ = end_ + 1;
       end_ = start_;
@@ -1784,7 +1854,7 @@ public:
     }
 
     Row operator*() {
-      Row result;
+      Row result(m_delimiter, m_quoteCharacter);
       result.buffer_ = buffer_;
       result.start_ = start_;
       result.end_ = end_;
@@ -1808,15 +1878,15 @@ public:
   RowIterator begin() const {
     if (buffer_size_ == 0)
       return end();
-    if (first_row_is_header::value) {
+    if (m_firstRowIsHeader) {
       const auto header_indices = header_indices_();
-      return RowIterator(buffer_, buffer_size_, header_indices.second  > 0 ? header_indices.second + 1 : 0);
+      return RowIterator(buffer_, buffer_size_, header_indices.second  > 0 ? header_indices.second + 1 : 0, m_delimiter, m_quoteCharacter, m_firstRowIsHeader);
     } else {
-      return RowIterator(buffer_, buffer_size_, 0);
+      return RowIterator(buffer_, buffer_size_, 0, m_delimiter, m_quoteCharacter, m_firstRowIsHeader);
     }
   }
 
-  RowIterator end() const { return RowIterator(buffer_, buffer_size_, buffer_size_ + 1); }
+  RowIterator end() const { return RowIterator(buffer_, buffer_size_, buffer_size_ + 1, m_delimiter, m_quoteCharacter, m_firstRowIsHeader); }
 
 private:
   std::pair<size_t, size_t> header_indices_() const {
@@ -1833,7 +1903,7 @@ public:
 
   Row header() const {
     size_t start = 0, end = 0;
-    Row result;
+    Row result(m_delimiter, m_quoteCharacter);
     result.buffer_ = buffer_;
     result.start_ = start;
     result.end_ = end;
@@ -1874,12 +1944,34 @@ public:
 
 namespace csv2 {
 
-template <class delimiter = delimiter<','>, class quote_character = quote_character<'\"'>>
 class Writer {
     std::ofstream& stream_;    // output stream for the writer
+
+
+
+	//--add by huangshangbin  start
+private:
+	char m_delimiter;
+	char m_quoteCharacter;
+	bool m_firstRowIsHeader;
+
 public:
-    template <typename Stream>
-    Writer(Stream&& stream) : stream_(std::forward<Stream>(stream)) {}
+	template <typename Stream>
+	Writer(Stream&& stream) : stream_(std::forward<Stream>(stream)) {
+		m_delimiter = ',';
+		m_quoteCharacter = '"';
+		m_firstRowIsHeader = true;
+	}
+
+	void setDelimiter(char delemiter) { m_delimiter = delemiter; }
+	void setQuoteCharacter(char quoteCharacter) { m_quoteCharacter = quoteCharacter; }
+	void firstRowIsHeader(bool value) { m_firstRowIsHeader = value; }
+
+	//--add by huangshangbin  end
+
+
+public:
+    
 
     ~Writer() {
         stream_.close();
@@ -1888,15 +1980,15 @@ public:
     template <typename Container>
     void write_row(Container&& row) {
         const auto& strings = std::forward<Container>(row);
-        const auto delimiter_string = std::string(1, delimiter::value);
-		const auto quote_character_string = std::string(1, quote_character::value);
+        const auto delimiter_string = std::string(1, m_delimiter);
+		const auto quote_character_string = std::string(1, m_quoteCharacter);
 
 		for (auto it = strings.begin(); it != strings.end() - 1; it++)
 		{
 			stream_ << quote_character_string << *it << quote_character_string << delimiter_string;
 		}
 
-        stream_ << "\"" + strings.back() + "\"" << "\n";
+        stream_ << m_quoteCharacter << strings.back() << m_quoteCharacter << "\n";
     }
 
     template <typename Container>
