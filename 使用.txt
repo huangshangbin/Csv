@@ -1,0 +1,142 @@
+﻿插入节点:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	XmlNode xmlNode = testXmlFile.createNode("User");
+	xmlNode.setKeyValue("name", "huang");
+	xmlNode.setContent("test");
+
+	XmlNode rootNode = testXmlFile.rootNode();
+
+	rootNode.insertChildNode(xmlNode);
+
+
+	testXmlFile.saveFile();
+	
+删除节点:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	testXmlFile.setNodePath("Root\\User");
+
+	XmlNode node = testXmlFile.getNode([](XmlNode& node) {
+		if (node.getKeyValue("age") == "25")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	testXmlFile.rootNode().deleteChildNode(node);
+
+	testXmlFile.saveFile();
+	
+创建文件:
+	XmlFile testXmlFile;
+	testXmlFile.createFile("config.xml", "User");
+	testXmlFile.loadFile("config.xml");
+	
+	
+常规获取节点列表:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	testXmlFile.setNodePath("Root\\User");
+	
+	deque<XmlNode> nodeList = testXmlFile.getNodeList();
+	for (int i = 0; i < nodeList.size(); i++)
+	{
+		cout << nodeList[i].getName() << endl;
+	}
+	
+lambda获取节点列表:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	testXmlFile.setNodePath("Root\\User");
+
+	deque<XmlNode> nodeList = testXmlFile.getNodeList([](XmlNode& node) {
+		if (node.getKeyValue("name") == "huang")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	for (int i = 0; i < nodeList.size(); i++)
+	{
+		cout << nodeList[i].getName() << endl;
+	}
+	
+lambda获取节点:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	testXmlFile.setNodePath("Root\\User");
+
+	XmlNode node = testXmlFile.getNode([](XmlNode& node) {
+		if (node.getKeyValue("age") == "25")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	cout << node.getKeyValue("telphoneNumber") << endl;
+	
+	
+常规获取子节点列表:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	deque<XmlNode> nodeList = testXmlFile.rootNode().getChildNodeList("User");
+	for (int i = 0; i < nodeList.size(); i++)
+	{
+		cout << nodeList[i].getName() << endl;
+	}
+	
+lambda获取子节点列表:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	deque<XmlNode> nodeList = testXmlFile.rootNode().getChildNodeList([](XmlNode& node) {
+		if (node.getKeyValue("name") == "huang")
+		{
+			return true;
+		}else
+		{
+			return false;
+		}
+	});
+
+	for (int i = 0; i < nodeList.size(); i++)
+	{
+		cout << nodeList[i].getName() << endl;
+	}
+	
+lambda获取子节点:
+	XmlFile testXmlFile;
+	testXmlFile.loadFile("testXml.xml");
+
+	XmlNode node = testXmlFile.rootNode().getChildNode([](XmlNode& node) {
+		if (node.getKeyValue("name") == "huang1")
+		{
+			return true;
+		}
+		else
+		{
+			return false;
+		}
+	});
+
+	cout << node.getKeyValue("age") << endl;
+	
