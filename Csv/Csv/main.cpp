@@ -3,50 +3,35 @@
 
 using namespace std;
 
-#include <csv/dependent/csv2.hpp>
-using namespace csv2;
+#include <csv/CsvFile.hpp>
 
-void readTest()
-{
-	csv2::Reader<trim_policy::trim_whitespace> csv;
 
-	csv.firstRowIsHeader(false);
 
-	string filePath = "test.csv";
-	if (csv.mmap("test.csv")) {
-		const auto header = csv.header();
-		for (const auto row : csv) {
-			for (const auto cell : row) {
-				// Do something with cell value
-				std::string value;
-				cell.read_value(value);
-				cout << value << endl;
-			}
-		}
-	}
-}
-
-void writeTest()
-{
-	char ch = ',';
-	std::ofstream stream("test.csv");
-	Writer writer(stream);
-
-	writer.setQuoteCharacter('[');
-
-	std::vector<std::vector<std::string>> rows =
-	{
-		{ "a", "b", "c" },
-		{ "1", "2", "3" },
-		{ "4", "5", "6" }
-	};
-
-	writer.write_rows(rows);
-}
 
 int main()
 {
-	writeTest();
+	CsvFile testFile;
+
+	testFile.firstRowIsHeader(false);
+
+	testFile.loadFile("test.csv");
+	
+
+	for (int i = 0; i < testFile.getRowSize(); i++)
+	{
+		for (int col = 0; col < testFile.getColSize(); col++)
+		{
+			cout << testFile.getValue(i, col) << ",";
+		}
+
+		cout << endl;
+	}
+
+	testFile.setValue(0, 0, "1");
+	testFile.setValue(0, 1, "2");
+	testFile.setValue(0, 2, "3");
+
+	testFile.saveNewFile("copy.csv");
 
 	int a;
 	cin >> a;

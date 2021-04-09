@@ -1637,6 +1637,10 @@ public:
 	void setQuoteCharacter(char quoteCharacter) { m_quoteCharacter = quoteCharacter; }
 	void firstRowIsHeader(bool value) { m_firstRowIsHeader = value; }
 
+	char getDelimiter() { return m_delimiter; }
+	char getQuoteCharacter() { return m_quoteCharacter; }
+	bool getFirstRowIsHeader() { return m_firstRowIsHeader; }
+
 //--add by huangshangbin  end
 
 public:
@@ -1953,19 +1957,16 @@ class Writer {
 private:
 	char m_delimiter;
 	char m_quoteCharacter;
-	bool m_firstRowIsHeader;
 
 public:
 	template <typename Stream>
 	Writer(Stream&& stream) : stream_(std::forward<Stream>(stream)) {
 		m_delimiter = ',';
 		m_quoteCharacter = '"';
-		m_firstRowIsHeader = true;
 	}
 
 	void setDelimiter(char delemiter) { m_delimiter = delemiter; }
 	void setQuoteCharacter(char quoteCharacter) { m_quoteCharacter = quoteCharacter; }
-	void firstRowIsHeader(bool value) { m_firstRowIsHeader = value; }
 
 	//--add by huangshangbin  end
 

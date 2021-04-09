@@ -1,142 +1,20 @@
-﻿插入节点:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	XmlNode xmlNode = testXmlFile.createNode("User");
-	xmlNode.setKeyValue("name", "huang");
-	xmlNode.setContent("test");
-
-	XmlNode rootNode = testXmlFile.rootNode();
-
-	rootNode.insertChildNode(xmlNode);
+﻿读取文件:
+     先使用 setDelimiter()  setQuoteCharacter()  firstRowIsHeader() 配置文件属性
+     
+      然后使用 loadFile() 即可。
 
 
-	testXmlFile.saveFile();
-	
-删除节点:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
 
-	testXmlFile.setNodePath("Root\\User");
+修改文件: 	
+     setHeader()  修改表头。如果第一行不是表头，则没有意义。
+     setValue() 修改单元格。
 
-	XmlNode node = testXmlFile.getNode([](XmlNode& node) {
-		if (node.getKeyValue("age") == "25")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	});
+增加数据:
+     setValue()  行数列数超过会自动增加行数列数。
 
-	testXmlFile.rootNode().deleteChildNode(node);
 
-	testXmlFile.saveFile();
-	
-创建文件:
-	XmlFile testXmlFile;
-	testXmlFile.createFile("config.xml", "User");
-	testXmlFile.loadFile("config.xml");
-	
-	
-常规获取节点列表:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	testXmlFile.setNodePath("Root\\User");
-	
-	deque<XmlNode> nodeList = testXmlFile.getNodeList();
-	for (int i = 0; i < nodeList.size(); i++)
-	{
-		cout << nodeList[i].getName() << endl;
-	}
-	
-lambda获取节点列表:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	testXmlFile.setNodePath("Root\\User");
-
-	deque<XmlNode> nodeList = testXmlFile.getNodeList([](XmlNode& node) {
-		if (node.getKeyValue("name") == "huang")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	});
-
-	for (int i = 0; i < nodeList.size(); i++)
-	{
-		cout << nodeList[i].getName() << endl;
-	}
-	
-lambda获取节点:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	testXmlFile.setNodePath("Root\\User");
-
-	XmlNode node = testXmlFile.getNode([](XmlNode& node) {
-		if (node.getKeyValue("age") == "25")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	});
-
-	cout << node.getKeyValue("telphoneNumber") << endl;
-	
-	
-常规获取子节点列表:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	deque<XmlNode> nodeList = testXmlFile.rootNode().getChildNodeList("User");
-	for (int i = 0; i < nodeList.size(); i++)
-	{
-		cout << nodeList[i].getName() << endl;
-	}
-	
-lambda获取子节点列表:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	deque<XmlNode> nodeList = testXmlFile.rootNode().getChildNodeList([](XmlNode& node) {
-		if (node.getKeyValue("name") == "huang")
-		{
-			return true;
-		}else
-		{
-			return false;
-		}
-	});
-
-	for (int i = 0; i < nodeList.size(); i++)
-	{
-		cout << nodeList[i].getName() << endl;
-	}
-	
-lambda获取子节点:
-	XmlFile testXmlFile;
-	testXmlFile.loadFile("testXml.xml");
-
-	XmlNode node = testXmlFile.rootNode().getChildNode([](XmlNode& node) {
-		if (node.getKeyValue("name") == "huang1")
-		{
-			return true;
-		}
-		else
-		{
-			return false;
-		}
-	});
-
-	cout << node.getKeyValue("age") << endl;
+保存文件:
+     1 可以先设置文件属性 setDelimiter()  setQuoteCharacter() setHeader()
+     2  saveFile() 覆盖当前文件。
+     3  saveNewFile() 保存为新文件。
 	
