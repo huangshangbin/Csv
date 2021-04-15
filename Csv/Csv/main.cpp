@@ -27,11 +27,11 @@ int main()
 		cout << endl;
 	}
 
-// 	testFile.setValue(0, 0, "1");
-// 	testFile.setValue(0, 1, "2");
-// 	testFile.setValue(0, 2, "3");
-// 
-// 	testFile.saveNewFile("copy.csv");
+	testFile.setValue(0, 0, "1");
+	testFile.setValue(0, 1, "2");
+	testFile.setValue(0, 2, "3");
+
+	testFile.saveNewFile("copy.csv");
 
 	int a;
 	cin >> a;

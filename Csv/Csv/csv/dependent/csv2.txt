@@ -3,7 +3,7 @@
 	2 去掉类 delimiter，quote_character，first_row_is_header 使用成员函数替换。 添加的代码用 //--add by huangshangbin 标识。
 	3 其他构造函数的调用。重写。  read_value 重写。
 
-
+	4 重写 Writer
 
 
 使用:
