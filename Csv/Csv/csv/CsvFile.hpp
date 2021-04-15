@@ -24,7 +24,7 @@ private:
 public:
 	CsvFile() 
 	{
-		m_rowSize = -1;
+		m_rowSize = 0;
 		m_colSize = 0;
 	}
 	~CsvFile() {}
@@ -35,7 +35,6 @@ public:
 	void firstRowIsHeader(bool value)
 	{
 		m_csvReader.firstRowIsHeader(value); 
-		m_rowSize = value ? -1 : 0;
 	}
 
 public:
@@ -53,7 +52,7 @@ public:
 				m_headerList.push_back(value);
 			}
 
-			m_rowSize = m_rowSize + m_csvReader.rows();//m_csvReader.rows include header row
+			m_rowSize = m_csvReader.rows();//m_csvReader.rows include header row
 			m_colSize = m_csvReader.cols();
 
 			int rowIndex = 0;
