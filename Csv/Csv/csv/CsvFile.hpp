@@ -16,16 +16,19 @@ private:
 	string m_filePath;
 	csv2::Reader<csv2::trim_policy::trim_whitespace> m_csvReader;
 
-	vector<string> m_headerList;
+	deque<string> m_headerList;
 	map<string, string> m_indexValueMap;// "1,2" = "huang"
 	unsigned long m_rowSize;
 	unsigned long m_colSize;
+
+	bool m_firstRowIsHeader;
 
 public:
 	CsvFile() 
 	{
 		m_rowSize = 0;
 		m_colSize = 0;
+		m_firstRowIsHeader = true;
 	}
 	~CsvFile() {}
 
@@ -35,6 +38,7 @@ public:
 	void firstRowIsHeader(bool value)
 	{
 		m_csvReader.firstRowIsHeader(value); 
+		m_firstRowIsHeader = value;
 	}
 
 public:
@@ -52,7 +56,16 @@ public:
 				m_headerList.push_back(value);
 			}
 
-			m_rowSize = m_csvReader.rows();//m_csvReader.rows include header row
+			//m_csvReader.rows forever not include first row
+			if (m_firstRowIsHeader)
+			{
+				m_rowSize = m_csvReader.rows();
+			}
+			else
+			{
+				m_rowSize = m_csvReader.rows() + 1;
+			}
+
 			m_colSize = m_csvReader.cols();
 
 			int rowIndex = 0;
@@ -74,7 +87,7 @@ public:
 	}
 
 public:
-	void setHeader(vector<string> headerList)
+	void setHeader(deque<string> headerList)
 	{
 		m_headerList = std::move(headerList);
 	}
@@ -123,7 +136,7 @@ public:
 		writer.setDelimiter(m_csvReader.getDelimiter());
 		writer.setQuoteCharacter(m_csvReader.getQuoteCharacter());
 
-		vector<vector<string>> fileData;
+		deque<deque<string>> fileData;
 		if (m_csvReader.getFirstRowIsHeader())
 		{
 			fileData.push_back(m_headerList);
@@ -131,7 +144,7 @@ public:
 
 		for (int rowIndex = 0; rowIndex < m_rowSize; rowIndex++)
 		{
-			vector<string> rowData;
+			deque<string> rowData;
 			for (int colIndex = 0; colIndex < m_colSize; colIndex++)
 			{
 				rowData.push_back(getValue(rowIndex, colIndex));

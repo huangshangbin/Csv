@@ -1646,7 +1646,15 @@ public:
 public:
   // Use this if you'd like to mmap the CSV file
   template <typename StringType> bool mmap(StringType &&filename) {
-    mmap_ = mio::mmap_source(filename);
+	  try
+	  {
+		  mmap_ = mio::mmap_source(filename);
+	  }
+	  catch (const std::system_error& e)
+	  {
+		  return false;
+	  }
+    
     if (!mmap_.is_open() || !mmap_.is_mapped())
       return false;
     buffer_ = mmap_.data();
@@ -1945,6 +1953,7 @@ public:
 #include <string>
 #include <utility>
 #include <iostream>
+#include <deque>
 
 namespace csv2 {
 
@@ -1978,9 +1987,9 @@ public:
         stream_.close();
     }
 
-    template <typename Container>
-    void write_row(Container&& row) {
-        const auto& strings = std::forward<Container>(row);
+  
+    void write_row(deque<string>& row, bool isNewline = true) {
+        const auto& strings = row;
         const auto delimiter_string = std::string(1, m_delimiter);
 		const auto quote_character_string = std::string(1, m_quoteCharacter);
 
@@ -1989,15 +1998,24 @@ public:
 			stream_ << quote_character_string << *it << quote_character_string << delimiter_string;
 		}
 
-        stream_ << m_quoteCharacter << strings.back() << m_quoteCharacter << "\n";
+		if (isNewline)
+		{
+			stream_ << m_quoteCharacter << strings.back() << m_quoteCharacter << "\n";
+		}
+		else
+		{
+			stream_ << m_quoteCharacter << strings.back() << m_quoteCharacter;
+		}
+        
     }
 
-    template <typename Container>
-    void write_rows(Container&& rows) {
-        const auto& container_of_rows = std::forward<Container>(rows);
-        for (const auto& row : container_of_rows) {
-            write_row(row);
+    void write_rows(deque<deque<string>>& rows) {
+        
+		for (int i = 0; i < rows.size() - 1; i++) {
+            write_row(rows[i]);
         }
+
+		write_row(rows[rows.size() - 1], false);
     }
 };
 

@@ -12,11 +12,11 @@ int main()
 {
 	CsvFile testFile;
 
-	testFile.firstRowIsHeader(false);
+	testFile.firstRowIsHeader(true);
 
 	testFile.loadFile("test.csv");
 	
-
+	cout << testFile.getRowSize() << endl;
 	for (int i = 0; i < testFile.getRowSize(); i++)
 	{
 		for (int col = 0; col < testFile.getColSize(); col++)
@@ -31,7 +31,7 @@ int main()
 	testFile.setValue(0, 1, "2");
 	testFile.setValue(0, 2, "3");
 
-	testFile.saveNewFile("copy.csv");
+	testFile.saveFile();
 
 	int a;
 	cin >> a;
